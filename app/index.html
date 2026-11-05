@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>Project Pulse</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="dashboard" aria-labelledby="page-title">
+      <header class="dashboard-header">
+        <div class="brand-mark" aria-hidden="true">P</div>
+        <div class="header-copy">
+          <p class="eyebrow">TEAM WORKSPACE</p>
+          <h1 id="page-title">Project Pulse</h1>
+          <p class="intro">A clear view of what your team is building and what needs attention.</p>
+        </div>
+        <div class="header-note" aria-label="Dashboard overview">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span>Project overview</span>
+        </div>
+      </header>
+
+      <section class="projects-section" aria-labelledby="projects-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">YOUR PORTFOLIO</p>
+            <h2 id="projects-heading">Projects</h2>
+          </div>
+          <p id="project-count" class="project-count" aria-live="polite"></p>
+        </div>
+
+        <div id="feedback" class="feedback feedback-loading" role="status" aria-live="polite">
+          <span class="loading-spinner" aria-hidden="true"></span>
+          <span>Loading your projects…</span>
+        </div>
+        <div id="project-list" class="project-grid" aria-busy="true"></div>
+      </section>
+
+      <footer class="dashboard-footer">
+        <span class="footer-mark" aria-hidden="true">✦</span>
+        <span>Keep the team moving forward, one project at a time.</span>
+      </footer>
+    </main>
+
+    <script>
+      const feedback = document.querySelector("#feedback");
+      const projectList = document.querySelector("#project-list");
+      const projectCount = document.querySelector("#project-count");
+
+      function showFeedback(message, state) {
+        feedback.className = `feedback feedback-${state}`;
+        feedback.replaceChildren(document.createTextNode(message));
+        feedback.hidden = false;
+      }
+
+      function addDetail(container, label, value, modifier) {
+        const detail = document.createElement("div");
+        detail.className = `project-detail${modifier ? ` ${modifier}` : ""}`;
+
+        const detailLabel = document.createElement("dt");
+        detailLabel.textContent = label;
+        const detailValue = document.createElement("dd");
+        detailValue.textContent = value;
+
+        detail.append(detailLabel, detailValue);
+        container.append(detail);
+      }
+
+      function displayValue(value) {
+        if (typeof value === "string" && value.trim()) return value.trim();
+        if (typeof value === "number" && Number.isFinite(value)) return String(value);
+        return "Not provided";
+      }
+
+      function knownClass(value, allowed) {
+        const normalized = value.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+        return allowed.includes(normalized) ? normalized : "unknown";
+      }
+
+      function createProjectCard(project, index) {
+        const record = project && typeof project === "object" && !Array.isArray(project) ? project : {};
+        const name = displayValue(record.name);
+        const owner = displayValue(record.owner);
+        const status = displayValue(record.status);
+        const recentActivity = displayValue(record.recentActivity);
+        const priority = displayValue(record.priority);
+
+        const card = document.createElement("article");
+        card.className = "project-card";
+        card.setAttribute("aria-labelledby", `project-title-${index}`);
+
+        const top = document.createElement("div");
+        top.className = "card-topline";
+        const heading = document.createElement("h3");
+        heading.className = "project-name";
+        heading.id = `project-title-${index}`;
+        heading.textContent = name;
+
+        const statusBadge = document.createElement("span");
+        statusBadge.className = `status-badge status-${knownClass(status, ["on-track", "in-progress", "at-risk", "blocked", "complete", "completed", "planned"])}`;
+        statusBadge.textContent = status;
+        top.append(heading, statusBadge);
+
+        const summary = document.createElement("p");
+        summary.className = "project-summary";
+        summary.textContent = typeof record.summary === "string" && record.summary.trim()
+          ? record.summary.trim()
+          : "Project updates and next steps at a glance.";
+
+        const details = document.createElement("dl");
+        details.className = "project-details";
+        addDetail(details, "Owner", owner, "owner-detail");
+        addDetail(details, "Recent activity", recentActivity, "activity-detail");
+
+        const cardFooter = document.createElement("div");
+        cardFooter.className = "card-footer";
+        const priorityLabel = document.createElement("span");
+        priorityLabel.className = "priority-label";
+        priorityLabel.textContent = "Priority";
+        const priorityValue = document.createElement("span");
+        priorityValue.className = `priority-value priority-${knownClass(priority, ["high", "medium", "low", "critical"])}`;
+        priorityValue.textContent = priority;
+        cardFooter.append(priorityLabel, priorityValue);
+
+        card.append(top, summary, details, cardFooter);
+        return card;
+      }
+
+      async function loadProjects() {
+        try {
+          const response = await fetch("project-data.json");
+          if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+          const data = await response.json();
+          if (!data || !Array.isArray(data.projects)) {
+            throw new Error("Project data must contain a projects array.");
+          }
+
+          projectList.replaceChildren();
+          if (data.projects.length === 0) {
+            projectList.setAttribute("aria-busy", "false");
+            projectCount.textContent = "0 projects";
+            showFeedback("No projects to show yet. Add projects to project-data.json to get started.", "empty");
+            return;
+          }
+
+          const cards = data.projects.map(createProjectCard);
+          projectList.append(...cards);
+          projectList.setAttribute("aria-busy", "false");
+          projectCount.textContent = `${cards.length} ${cards.length === 1 ? "project" : "projects"}`;
+          feedback.hidden = true;
+        } catch (error) {
+          projectList.replaceChildren();
+          projectList.setAttribute("aria-busy", "false");
+          projectCount.textContent = "";
+          showFeedback("We couldn’t load your projects. Check your connection and project-data.json, then refresh the page.", "error");
+          console.error("Unable to load project data:", error);
+        }
+      }
+
+      loadProjects();
+    </script>
+  </body>
+</html>

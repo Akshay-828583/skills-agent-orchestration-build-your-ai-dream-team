@@ -1,0 +1,36 @@
+{
+  "projects": [
+    {
+      "name": "Atlas Design System",
+      "owner": "Maya Chen",
+      "status": "On track",
+      "recentActivity": "Updated form patterns · 2 hours ago",
+      "priority": "High",
+      "summary": "A shared foundation of accessible components for every product team."
+    },
+    {
+      "name": "Customer Insights",
+      "owner": "Jordan Lee",
+      "status": "In progress",
+      "recentActivity": "Research synthesis in review · Yesterday",
+      "priority": "Medium",
+      "summary": "Bring customer feedback and product signals into one useful view."
+    },
+    {
+      "name": "Mobile Onboarding",
+      "owner": "Sam Rivera",
+      "status": "At risk",
+      "recentActivity": "Waiting on final copy approval · 2 days ago",
+      "priority": "High",
+      "summary": "Make the first-run experience simpler and more welcoming."
+    },
+    {
+      "name": "Knowledge Hub",
+      "owner": "Avery Patel",
+      "status": "Planned",
+      "recentActivity": "Kickoff scheduled for next week",
+      "priority": "Low",
+      "summary": "Help contributors find current guidance and team decisions faster."
+    }
+  ]
+}
